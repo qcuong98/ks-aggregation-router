@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IKSAggregationRouterV3 {
-  /// @notice Thrown when the msg.value is not enough
+  /// @notice Thrown when the msg.value is less than the required amount
   error NotEnoughMsgValue(uint256 required, uint256 provided);
 
   /// @notice Thrown when the output amount is less than the minimum amount
@@ -31,7 +31,7 @@ interface IKSAggregationRouterV3 {
   /// @notice Emitted when the fee is collected
   event CollectFee(address token, uint256 totalAmount, uint256 feeAmount, address recipient);
 
-  /// @notice Struct for input token additional data
+  /// @notice Contains the additional data for an input token
   /// @param permitData The permit data
   /// @param feeRecipients The fee recipients
   /// @param fees The fees, either in bps or absolute value
@@ -49,8 +49,8 @@ interface IKSAggregationRouterV3 {
     uint256[] amounts;
   }
 
-  /// @notice Struct for output token additional data
-  /// @param minAmount The minimum amount of the output token
+  /// @notice Contains the additional data for an output token
+  /// @param minAmount The minimum output amount
   /// @param feeRecipients The fee recipients
   /// @param fees The fees, either in bps or absolute value
   struct OutputTokenData {
@@ -59,18 +59,18 @@ interface IKSAggregationRouterV3 {
     uint256[] fees;
   }
 
-  /// @notice Struct for swap router params
+  /// @notice Contains the parameters for a swap
   /// @param permit2Data The data to call permit2 with
   /// @param inputTokens The input tokens
   /// @param inputAmounts The input amounts
-  /// @param inputData The input tokens' data
+  /// @param inputData The additional data for the input tokens
   /// @param outputTokens The output tokens
-  /// @param outputData The output tokens' data
+  /// @param outputData The additional data for the output tokens
   /// @param executor The executor to call
   /// @param executorData The data to pass to the executor
   /// @param recipient The recipient of the output tokens
   /// @param clientData The client data
-  struct SwapRouterParams {
+  struct SwapParams {
     bytes permit2Data;
     address[] inputTokens;
     uint256[] inputAmounts;
@@ -83,9 +83,10 @@ interface IKSAggregationRouterV3 {
     bytes clientData;
   }
 
-  /// @notice Entry point for swaps
-  function swap(SwapRouterParams calldata params) external payable;
+  /// @notice Entry point for swapping
+  /// @param params The parameters for the swap
+  function swap(SwapParams calldata params) external payable;
 
-  /// @notice Returns the address of the caller
+  /// @notice Returns the address of who called the swap function
   function msgSender() external view returns (address);
 }

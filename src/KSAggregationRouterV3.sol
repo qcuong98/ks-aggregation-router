@@ -51,7 +51,7 @@ contract KSAggregationRouterV3 is
   receive() external payable {}
 
   /// @inheritdoc IKSAggregationRouterV3
-  function swap(SwapRouterParams calldata params) external payable isNotLocked whenNotPaused {
+  function swap(SwapParams calldata params) external payable isNotLocked whenNotPaused {
     uint256[] memory inputBalances = _recordInputBalances(params.inputTokens);
     uint256[] memory outputBalances =
       _recordOutputBalances(params.outputTokens, params.outputData, params.recipient);
