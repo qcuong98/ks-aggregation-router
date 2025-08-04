@@ -26,7 +26,7 @@ contract DeployScript is BaseScript {
     if (bytes(salt).length == 0) {
       revert('salt is required');
     }
-    salt = string.concat('KSAggregationRouterV3 ', salt);
+    salt = string.concat('KSAggregationRouterV3_', salt);
 
     bytes memory creationCode = abi.encodePacked(
       type(KSAggregationRouterV3).creationCode, abi.encode(admin, guardians, rescuers, permit2)
