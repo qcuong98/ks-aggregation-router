@@ -1,0 +1,20 @@
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+[profile.default]
+optimizer = true
+optimizer_runs = 44444444
+via_ir = true
+fs_permissions = [
+    { access = 'read', path = './'},
+    { access = 'read-write', path = './script/config' }
+]
+
+[fmt]
+line_length = 100
+tab_width = 2
+quote_style = 'single'
+number_underscore = 'thousands'
+sort_imports = true
+
+[rpc_endpoints]
+sepolia = "${RPC_ETH_SEPOLIA}"

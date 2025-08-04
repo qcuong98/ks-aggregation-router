@@ -1,0 +1,25 @@
+name: Forge Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  forge-lint:
+    name: Forge Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Run Forge fmt
+        run: forge fmt --check
