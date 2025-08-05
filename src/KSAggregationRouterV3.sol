@@ -217,7 +217,7 @@ contract KSAggregationRouterV3 is
     internal
   {
     (bool success,) = executor.call{value: nativeValue}(
-      abi.encodePacked(IKSAggregationExecutor.callBytes.selector, executorData)
+      abi.encodeCall(IKSAggregationExecutor.callBytes, (executorData))
     );
     if (!success) {
       CustomRevert.bubbleUpAndRevertWith(
