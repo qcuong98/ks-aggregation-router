@@ -34,7 +34,7 @@ contract KSAggregationRouterV3 is
 
   uint256 constant FEE_DENOMINATOR = 1_000_000;
 
-  IAllowanceTransfer public immutable permit2;
+  IAllowanceTransfer public immutable PERMIT2;
 
   constructor(
     address initialAdmin,
@@ -45,7 +45,7 @@ contract KSAggregationRouterV3 is
     _batchGrantRole(KSRoles.GUARDIAN_ROLE, initialGuardians);
     _batchGrantRole(KSRoles.RESCUER_ROLE, initialRescuers);
 
-    permit2 = _permit2;
+    PERMIT2 = _permit2;
   }
 
   receive() external payable {}
@@ -99,10 +99,10 @@ contract KSAggregationRouterV3 is
   function _callPermit2(bytes calldata permit2Data) internal {
     if (permit2Data.length > 0) {
       (bool success,) =
-        address(permit2).call(abi.encodePacked(IAllowanceTransfer.permit.selector, permit2Data));
+        address(PERMIT2).call(abi.encodePacked(IAllowanceTransfer.permit.selector, permit2Data));
       if (!success) {
         CustomRevert.bubbleUpAndRevertWith(
-          address(permit2), IAllowanceTransfer.permit.selector, Permit2Failed.selector
+          address(PERMIT2), IAllowanceTransfer.permit.selector, Permit2Failed.selector
         );
       }
     }
@@ -167,31 +167,23 @@ contract KSAggregationRouterV3 is
         });
       }
 
-      permit2.transferFrom(details);
-    } else if (token.isNative()) {
-      require(totalAmount <= msg.value, NotEnoughMsgValue(totalAmount, msg.value));
-
-      for (uint256 i = 0; i < feeRecipients.length; i++) {
-        uint256 feeAmount = _computeFeeAmount(totalAmount, fees[i]);
-
-        if (feeAmount > 0) {
-          feeRecipients[i].safeTransferNative(feeAmount);
-
-          emit CollectFee(token, totalAmount, feeAmount, feeRecipients[i]);
-        }
-      }
+      PERMIT2.transferFrom(details);
     } else {
+      if (token.isNative()) {
+        require(totalAmount <= msg.value, NotEnoughMsgValue(totalAmount, msg.value));
+      }
+
       for (uint256 i = 0; i < feeRecipients.length; i++) {
         uint256 feeAmount = _computeFeeAmount(totalAmount, fees[i]);
 
         if (feeAmount > 0) {
-          token.safeTransferFrom(msg.sender, feeRecipients[i], feeAmount);
+          _safeTransferFrom(token, msg.sender, feeRecipients[i], feeAmount);
 
           emit CollectFee(token, totalAmount, feeAmount, feeRecipients[i]);
         }
       }
       for (uint256 i = 0; i < targets.length; i++) {
-        token.safeTransferFrom(msg.sender, targets[i], amounts[i]);
+        _safeTransferFrom(token, msg.sender, targets[i], amounts[i]);
       }
     }
   }
@@ -300,6 +292,14 @@ contract KSAggregationRouterV3 is
     } else {
       outputAmount = token.balanceOf(recipient) - previousBalance;
       require(outputAmount >= minAmount, NotEnoughOutputAmount(minAmount, outputAmount));
+    }
+  }
+
+  function _safeTransferFrom(address token, address from, address to, uint256 amount) internal {
+    if (token.isNative()) {
+      to.safeTransferNative(amount);
+    } else {
+      token.safeTransferFrom(from, to, amount);
     }
   }
 
