@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IKSAggregationRouterV3 {
+  /// @notice Thrown when the deadline is passed
+  error DeadlinePassed(uint256 deadline, uint256 blockTimestamp);
+
   /// @notice Thrown when the msg.value is less than the required amount
   error NotEnoughMsgValue(uint256 required, uint256 provided);
 
@@ -60,32 +63,37 @@ interface IKSAggregationRouterV3 {
   }
 
   /// @notice Contains the parameters for a swap
-  /// @param permit2Data The data to call permit2 with
   /// @param inputTokens The input tokens
   /// @param inputAmounts The input amounts
   /// @param inputData The additional data for the input tokens
   /// @param outputTokens The output tokens
   /// @param outputData The additional data for the output tokens
+  /// @param permit2Data The data to call permit2 with
   /// @param executor The executor to call
   /// @param executorData The data to pass to the executor
   /// @param recipient The recipient of the output tokens
+  /// @param deadline The deadline for the swap
   /// @param clientData The client data
   struct SwapParams {
-    bytes permit2Data;
     address[] inputTokens;
     uint256[] inputAmounts;
     InputTokenData[] inputData;
     address[] outputTokens;
     OutputTokenData[] outputData;
+    bytes permit2Data;
     address executor;
     bytes executorData;
     address recipient;
+    uint256 deadline;
     bytes clientData;
   }
 
   /// @notice Entry point for swapping
   /// @param params The parameters for the swap
-  function swap(SwapParams calldata params) external payable;
+  function swap(SwapParams calldata params)
+    external
+    payable
+    returns (uint256[] memory outputAmounts, uint256 gasUsed);
 
   /// @notice Returns the address of who called the swap function
   function msgSender() external view returns (address);

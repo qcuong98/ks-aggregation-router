@@ -51,7 +51,19 @@ contract KSAggregationRouterV3 is
   receive() external payable {}
 
   /// @inheritdoc IKSAggregationRouterV3
-  function swap(SwapParams calldata params) external payable isNotLocked whenNotPaused {
+  function swap(SwapParams calldata params)
+    external
+    payable
+    isNotLocked
+    whenNotPaused
+    returns (uint256[] memory outputAmounts, uint256 gasUsed)
+  {
+    uint256 gasBefore = gasleft();
+
+    if (block.timestamp > params.deadline) {
+      revert DeadlinePassed(params.deadline, block.timestamp);
+    }
+
     uint256[] memory inputBalances = _recordInputBalances(params.inputTokens);
     uint256[] memory outputBalances =
       _recordOutputBalances(params.outputTokens, params.outputData, params.recipient);
@@ -62,7 +74,7 @@ contract KSAggregationRouterV3 is
 
     _callExecutor(params.executor, address(this).balance - nativeBalanceBefore, params.executorData);
 
-    uint256[] memory outputAmounts =
+    outputAmounts =
       _processOutputTokens(params.outputTokens, params.outputData, outputBalances, params.recipient);
     _refundInputTokens(params.inputTokens, inputBalances);
 
@@ -77,6 +89,8 @@ contract KSAggregationRouterV3 is
     );
 
     emit ClientData(params.clientData);
+
+    gasUsed = gasBefore - gasleft();
   }
 
   function msgSender() external view returns (address) {
@@ -170,7 +184,9 @@ contract KSAggregationRouterV3 is
       PERMIT2.transferFrom(details);
     } else {
       if (token.isNative()) {
-        require(totalAmount <= msg.value, NotEnoughMsgValue(totalAmount, msg.value));
+        if (totalAmount > msg.value) {
+          revert NotEnoughMsgValue(totalAmount, msg.value);
+        }
       }
 
       for (uint256 i = 0; i < feeRecipients.length; i++) {
@@ -286,12 +302,16 @@ contract KSAggregationRouterV3 is
       }
 
       outputAmount -= totalFeeAmount;
-      require(outputAmount >= minAmount, NotEnoughOutputAmount(minAmount, outputAmount));
+      if (outputAmount < minAmount) {
+        revert NotEnoughOutputAmount(minAmount, outputAmount);
+      }
 
       token.safeTransfer(recipient, outputAmount);
     } else {
       outputAmount = token.balanceOf(recipient) - previousBalance;
-      require(outputAmount >= minAmount, NotEnoughOutputAmount(minAmount, outputAmount));
+      if (outputAmount < minAmount) {
+        revert NotEnoughOutputAmount(minAmount, outputAmount);
+      }
     }
   }
 
