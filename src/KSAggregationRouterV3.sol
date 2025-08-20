@@ -76,7 +76,7 @@ contract KSAggregationRouterV3 is
 
     outputAmounts =
       _processOutputTokens(params.outputTokens, params.outputData, outputBalances, params.recipient);
-    _refundInputTokens(params.inputTokens, inputBalances);
+    _refundInputTokens(params.inputTokens, inputBalances, params.recipient);
 
     emit Swap(
       msg.sender,
@@ -235,9 +235,11 @@ contract KSAggregationRouterV3 is
   }
 
   /// @dev Refund the remaining input tokens to the sender
-  function _refundInputTokens(address[] calldata inputTokens, uint256[] memory inputBalances)
-    internal
-  {
+  function _refundInputTokens(
+    address[] calldata inputTokens,
+    uint256[] memory inputBalances,
+    address recipient
+  ) internal {
     for (uint256 i = 0; i < inputTokens.length; i++) {
       address token = inputTokens[i];
       uint256 refundAmount = token.selfBalance() - inputBalances[i];
@@ -247,7 +249,7 @@ contract KSAggregationRouterV3 is
           refundAmount--;
         }
       }
-      token.safeTransfer(msg.sender, refundAmount);
+      token.safeTransfer(recipient, refundAmount);
     }
   }
 
