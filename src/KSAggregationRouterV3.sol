@@ -127,7 +127,11 @@ contract KSAggregationRouterV3 is
     address[] calldata inputTokens,
     uint256[] calldata inputAmounts,
     InputTokenData[] calldata inputData
-  ) internal {
+  )
+    internal
+    checkLengths(inputTokens.length, inputAmounts.length)
+    checkLengths(inputTokens.length, inputData.length)
+  {
     for (uint256 i = 0; i < inputData.length; i++) {
       _collectInputToken(
         inputTokens[i],
