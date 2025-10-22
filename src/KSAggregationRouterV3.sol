@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.30;
 
-import {Lock} from './Lock.sol';
-
 import {IKSAggregationExecutor} from './interfaces/IKSAggregationExecutor.sol';
 import {IKSAggregationRouterV3} from './interfaces/IKSAggregationRouterV3.sol';
 
@@ -13,6 +11,7 @@ import {KSRoles} from 'ks-common-sc/src/libraries/KSRoles.sol';
 import {PermitHelper} from 'ks-common-sc/src/libraries/token/PermitHelper.sol';
 import {TokenHelper} from 'ks-common-sc/src/libraries/token/TokenHelper.sol';
 
+import {Lock} from 'ks-common-sc/src/base/Lock.sol';
 import {ManagementBase} from 'ks-common-sc/src/base/ManagementBase.sol';
 import {ManagementPausable} from 'ks-common-sc/src/base/ManagementPausable.sol';
 import {ManagementRescuable} from 'ks-common-sc/src/base/ManagementRescuable.sol';
@@ -28,11 +27,13 @@ contract KSAggregationRouterV3 is
   using TokenHelper for address;
   using PermitHelper for address;
 
-  uint256 constant FLAG_MASK = 1 << 255;
+  uint256 internal constant FLAG_MASK = 1 << 255;
 
-  uint256 constant AMOUNT_MASK = (1 << 255) - 1;
+  uint256 internal constant AMOUNT_MASK = (1 << 255) - 1;
 
-  uint256 constant FEE_DENOMINATOR = 1_000_000;
+  uint256 internal constant FEE_DENOMINATOR = 1_000_000;
+
+  bytes32 public constant EXECUTOR_ROLE = keccak256('EXECUTOR_ROLE');
 
   IAllowanceTransfer public immutable PERMIT2;
 
@@ -40,10 +41,12 @@ contract KSAggregationRouterV3 is
     address initialAdmin,
     address[] memory initialGuardians,
     address[] memory initialRescuers,
+    address[] memory initialExecutors,
     IAllowanceTransfer _permit2
   ) ManagementBase(0, initialAdmin) {
     _batchGrantRole(KSRoles.GUARDIAN_ROLE, initialGuardians);
     _batchGrantRole(KSRoles.RESCUER_ROLE, initialRescuers);
+    _batchGrantRole(EXECUTOR_ROLE, initialExecutors);
 
     PERMIT2 = _permit2;
   }
@@ -58,6 +61,10 @@ contract KSAggregationRouterV3 is
     whenNotPaused
     returns (uint256[] memory outputAmounts, uint256 gasUsed)
   {
+    if (!hasRole(EXECUTOR_ROLE, params.executor)) {
+      revert AccessControlUnauthorizedAccount(params.executor, EXECUTOR_ROLE);
+    }
+
     uint256 gasBefore = gasleft();
 
     if (block.timestamp > params.deadline) {
@@ -69,13 +76,17 @@ contract KSAggregationRouterV3 is
       _recordOutputBalances(params.outputTokens, params.outputData, params.recipient);
     uint256 nativeBalanceBefore = address(this).balance - msg.value;
 
-    _callPermit2(params.permit2Data);
+    if (params.permit2Data.length > 0) {
+      PermitHelper.callPermit2(PERMIT2, msg.sender, params.permit2Data);
+    }
+
     _collectInputTokens(params.inputTokens, params.inputAmounts, params.inputData);
 
     _callExecutor(params.executor, address(this).balance - nativeBalanceBefore, params.executorData);
 
-    outputAmounts =
-      _processOutputTokens(params.outputTokens, params.outputData, outputBalances, params.recipient);
+    outputAmounts = _processOutputTokens(
+      params.outputTokens, params.outputData, outputBalances, params.recipient
+    );
     _refundInputTokens(params.inputTokens, inputBalances, params.recipient);
 
     emit Swap(
@@ -90,7 +101,9 @@ contract KSAggregationRouterV3 is
 
     emit ClientData(params.clientData);
 
-    gasUsed = gasBefore - gasleft();
+    unchecked {
+      gasUsed = gasBefore - gasleft();
+    }
   }
 
   function msgSender() external view returns (address) {
@@ -106,19 +119,6 @@ contract KSAggregationRouterV3 is
     inputBalances = new uint256[](inputTokens.length);
     for (uint256 i = 0; i < inputTokens.length; i++) {
       inputBalances[i] = _selfBalanceMinusMsgValue(inputTokens[i]);
-    }
-  }
-
-  /// @dev Call the permit2 contract to transfer the input tokens
-  function _callPermit2(bytes calldata permit2Data) internal {
-    if (permit2Data.length > 0) {
-      (bool success,) =
-        address(PERMIT2).call(abi.encodePacked(IAllowanceTransfer.permit.selector, permit2Data));
-      if (!success) {
-        CustomRevert.bubbleUpAndRevertWith(
-          address(PERMIT2), IAllowanceTransfer.permit.selector, Permit2Failed.selector
-        );
-      }
     }
   }
 
@@ -159,17 +159,18 @@ contract KSAggregationRouterV3 is
     checkLengths(feeRecipients.length, fees.length)
     checkLengths(targets.length, amounts.length)
   {
-    if (!token.erc20Permit(msg.sender, permitData) && permitData.length > 0) {
+    if (permitData.length == 0) {
+      if (totalAmount >= type(uint160).max) {
+        revert TooLargeInputAmount(totalAmount);
+      }
+
       IAllowanceTransfer.AllowanceTransferDetails[] memory details =
         new IAllowanceTransfer.AllowanceTransferDetails[](feeRecipients.length + targets.length);
 
       for (uint256 i = 0; i < feeRecipients.length; i++) {
         uint256 feeAmount = _computeFeeAmount(totalAmount, fees[i]);
         details[i] = IAllowanceTransfer.AllowanceTransferDetails({
-          from: msg.sender,
-          to: feeRecipients[i],
-          amount: uint160(feeAmount),
-          token: token
+          from: msg.sender, to: feeRecipients[i], amount: uint160(feeAmount), token: token
         });
 
         if (feeAmount > 0) {
@@ -178,19 +179,18 @@ contract KSAggregationRouterV3 is
       }
       for (uint256 i = 0; i < targets.length; i++) {
         details[i + feeRecipients.length] = IAllowanceTransfer.AllowanceTransferDetails({
-          from: msg.sender,
-          to: targets[i],
-          amount: uint160(amounts[i]),
-          token: token
+          from: msg.sender, to: targets[i], amount: uint160(amounts[i]), token: token
         });
       }
 
       PERMIT2.transferFrom(details);
     } else {
       if (token.isNative()) {
-        if (totalAmount > msg.value) {
-          revert NotEnoughMsgValue(totalAmount, msg.value);
+        if (totalAmount != msg.value) {
+          revert InvalidMsgValue(totalAmount, msg.value);
         }
+      } else {
+        token.callERC20Permit(msg.sender, permitData);
       }
 
       for (uint256 i = 0; i < feeRecipients.length; i++) {
@@ -228,9 +228,9 @@ contract KSAggregationRouterV3 is
   function _callExecutor(address executor, uint256 nativeValue, bytes calldata executorData)
     internal
   {
-    (bool success,) = executor.call{value: nativeValue}(
-      abi.encodeCall(IKSAggregationExecutor.callBytes, (executorData))
-    );
+    (bool success,) = executor.call{
+      value: nativeValue
+    }(abi.encodeCall(IKSAggregationExecutor.callBytes, (executorData)));
     if (!success) {
       CustomRevert.bubbleUpAndRevertWith(
         executor, IKSAggregationExecutor.callBytes.selector, CallExecutorFailed.selector
