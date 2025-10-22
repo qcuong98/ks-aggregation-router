@@ -67,7 +67,7 @@ interface IKSAggregationRouterV3 {
 
   /// @notice Contains the parameters for a swap
   /// @param inputTokens The input tokens
-  /// @param inputAmounts The input amounts
+  /// @param inputAmounts The input amounts (only used for fee calculation)
   /// @param inputData The additional data for the input tokens
   /// @param outputTokens The output tokens
   /// @param outputData The additional data for the output tokens
