@@ -61,9 +61,7 @@ contract KSAggregationRouterV3 is
     whenNotPaused
     returns (uint256[] memory outputAmounts, uint256 gasUsed)
   {
-    if (!hasRole(EXECUTOR_ROLE, params.executor)) {
-      revert AccessControlUnauthorizedAccount(params.executor, EXECUTOR_ROLE);
-    }
+    _checkRole(EXECUTOR_ROLE, params.executor);
 
     uint256 gasBefore = gasleft();
 
