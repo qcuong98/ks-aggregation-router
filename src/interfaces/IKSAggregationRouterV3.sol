@@ -6,10 +6,13 @@ interface IKSAggregationRouterV3 {
   error DeadlinePassed(uint256 deadline, uint256 blockTimestamp);
 
   /// @notice Thrown when the msg.value is less than the required amount
-  error NotEnoughMsgValue(uint256 required, uint256 provided);
+  error InvalidMsgValue(uint256 required, uint256 provided);
 
   /// @notice Thrown when the output amount is less than the minimum amount
   error NotEnoughOutputAmount(uint256 minAmount, uint256 outputAmount);
+
+  /// @notice Thrown when the input amount is too large
+  error TooLargeInputAmount(uint256 inputAmount);
 
   /// @notice Thrown when failed to call the executor
   error CallExecutorFailed();
@@ -41,10 +44,12 @@ interface IKSAggregationRouterV3 {
   /// @param targets The targets to transfer the input token to
   /// @param amounts The amounts to transfer to the targets
   struct InputTokenData {
-    // length = 5 * 32: IERC20Permit, use ERC20 `transferFrom`
-    // length = 6 * 32: IDaiLikePermit, use ERC20 `transferFrom`
-    // length = 0: use ERC20 `transferFrom`
-    // otherwise: use Permit2 `transferFrom`
+    // Permit method selection:
+    // length = 5 * 32: use ERC20 `permit`
+    // length = 6 * 32: use DAI `permit`
+    // Transfer method selection:
+    // length == 0: use Permit2 `transferFrom`
+    // length != 0: use ERC20 `transferFrom`
     bytes permitData;
     address[] feeRecipients;
     uint256[] fees;
@@ -64,7 +69,7 @@ interface IKSAggregationRouterV3 {
 
   /// @notice Contains the parameters for a swap
   /// @param inputTokens The input tokens
-  /// @param inputAmounts The input amounts
+  /// @param inputAmounts The input amounts (only used for fee calculation)
   /// @param inputData The additional data for the input tokens
   /// @param outputTokens The output tokens
   /// @param outputData The additional data for the output tokens

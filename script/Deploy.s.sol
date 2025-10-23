@@ -7,11 +7,12 @@ import 'src/KSAggregationRouterV3.sol';
 
 contract DeployScript is BaseScript {
   string salt = '';
+
   address admin;
   address[] guardians;
   address[] rescuers;
-
-  IAllowanceTransfer public permit2;
+  address[] executors;
+  address permit2;
 
   function setUp() public override {
     super.setUp();
@@ -19,7 +20,8 @@ contract DeployScript is BaseScript {
     admin = _readAddress('admin');
     guardians = _readAddressArray('guardians');
     rescuers = _readAddressArray('rescuers');
-    permit2 = IAllowanceTransfer(_readAddress('permit2'));
+    executors = _readAddressArray('executors');
+    permit2 = _readAddress('permit2');
   }
 
   function run() public {
@@ -29,7 +31,8 @@ contract DeployScript is BaseScript {
     salt = string.concat('KSAggregationRouterV3_', salt);
 
     bytes memory creationCode = abi.encodePacked(
-      type(KSAggregationRouterV3).creationCode, abi.encode(admin, guardians, rescuers, permit2)
+      type(KSAggregationRouterV3).creationCode,
+      abi.encode(admin, guardians, rescuers, executors, permit2)
     );
 
     // Deploy the router
