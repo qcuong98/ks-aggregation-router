@@ -211,7 +211,12 @@ contract KSAggregationRouterV3 is
     address[] calldata outputTokens,
     OutputTokenData[] calldata outputData,
     address recipient
-  ) internal view returns (uint256[] memory outputBalances) {
+  )
+    internal
+    view
+    checkLengths(outputTokens.length, outputData.length)
+    returns (uint256[] memory outputBalances)
+  {
     outputBalances = new uint256[](outputTokens.length);
     for (uint256 i = 0; i < outputTokens.length; i++) {
       if (outputData[i].feeRecipients.length == 0) {
