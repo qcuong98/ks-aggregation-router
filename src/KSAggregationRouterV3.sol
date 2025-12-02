@@ -157,6 +157,8 @@ contract KSAggregationRouterV3 is
     checkLengths(feeRecipients.length, fees.length)
     checkLengths(targets.length, amounts.length)
   {
+    uint256 totalTransferred = 0;
+
     if (permitData.length == 0) {
       if (totalAmount >= type(uint160).max) {
         revert TooLargeInputAmount(totalAmount);
@@ -167,6 +169,8 @@ contract KSAggregationRouterV3 is
 
       for (uint256 i = 0; i < feeRecipients.length; i++) {
         uint256 feeAmount = _computeFeeAmount(totalAmount, fees[i]);
+        totalTransferred += feeAmount;
+
         details[i] = IAllowanceTransfer.AllowanceTransferDetails({
           from: msg.sender, to: feeRecipients[i], amount: uint160(feeAmount), token: token
         });
@@ -176,6 +180,8 @@ contract KSAggregationRouterV3 is
         }
       }
       for (uint256 i = 0; i < targets.length; i++) {
+        totalTransferred += amounts[i];
+
         details[i + feeRecipients.length] = IAllowanceTransfer.AllowanceTransferDetails({
           from: msg.sender, to: targets[i], amount: uint160(amounts[i]), token: token
         });
@@ -193,6 +199,7 @@ contract KSAggregationRouterV3 is
 
       for (uint256 i = 0; i < feeRecipients.length; i++) {
         uint256 feeAmount = _computeFeeAmount(totalAmount, fees[i]);
+        totalTransferred += feeAmount;
 
         if (feeAmount > 0) {
           _safeTransferFrom(token, msg.sender, feeRecipients[i], feeAmount);
@@ -201,8 +208,14 @@ contract KSAggregationRouterV3 is
         }
       }
       for (uint256 i = 0; i < targets.length; i++) {
+        totalTransferred += amounts[i];
+
         _safeTransferFrom(token, msg.sender, targets[i], amounts[i]);
       }
+    }
+
+    if (totalTransferred > totalAmount) {
+      revert TotalTransferredExceeded(totalAmount, totalTransferred);
     }
   }
 

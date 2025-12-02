@@ -20,6 +20,9 @@ interface IKSAggregationRouterV3 {
   /// @notice Thrown when failed to call permit2
   error Permit2Failed();
 
+  /// @notice Thrown when the total transferred amount exceeds the total amount
+  error TotalTransferredExceeded(uint256 totalAmount, uint256 totalTransferred);
+
   /// @notice Emitted when a swap is executed
   event Swap(
     address indexed sender,
