@@ -1,0 +1,377 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>IKSAggregationRouterV3</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../../../favicon.svg">
+        <link rel="shortcut icon" href="../../../favicon.png">
+        <link rel="stylesheet" href="../../../css/variables.css">
+        <link rel="stylesheet" href="../../../css/general.css">
+        <link rel="stylesheet" href="../../../css/chrome.css">
+        <link rel="stylesheet" href="../../../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../../../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../../../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="../../../highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="../../../tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="../../../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../../../book.css">
+
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../../../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../../../searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../../../toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../../../toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title"></h1>
+
+                    <div class="right-buttons">
+                        <a href="../../../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/KyberNetwork/ks-aggregation-router" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="iksaggregationrouterv3"><a class="header" href="#iksaggregationrouterv3">IKSAggregationRouterV3</a></h1>
+<p><a href="https://github.com/KyberNetwork/ks-aggregation-router/blob/117711a92311a1ccde02acb925aa9f797123a2af/src/interfaces/IKSAggregationRouterV3.sol">Git Source</a></p>
+<h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
+<h3 id="swap"><a class="header" href="#swap">swap</a></h3>
+<p>Entry point for swapping</p>
+<pre><code class="language-solidity">function swap(SwapParams calldata params)
+  external
+  payable
+  returns (uint256[] memory outputAmounts, uint256 gasUsed);
+</code></pre>
+<p><strong>Parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>params</code></td><td><code>SwapParams</code></td><td>The parameters for the swap</td></tr>
+</tbody></table>
+</div>
+<h3 id="msgsender"><a class="header" href="#msgsender">msgSender</a></h3>
+<p>Returns the address of who called the swap function</p>
+<pre><code class="language-solidity">function msgSender() external view returns (address);
+</code></pre>
+<h2 id="events"><a class="header" href="#events">Events</a></h2>
+<h3 id="swap-1"><a class="header" href="#swap-1">Swap</a></h3>
+<p>Emitted when a swap is executed</p>
+<pre><code class="language-solidity">event Swap(
+  address indexed sender,
+  address indexed executor,
+  address indexed recipient,
+  address[] inputTokens,
+  uint256[] inputAmounts,
+  address[] outputTokens,
+  uint256[] outputAmounts
+);
+</code></pre>
+<h3 id="clientdata"><a class="header" href="#clientdata">ClientData</a></h3>
+<p>Emitted when the client data is set</p>
+<pre><code class="language-solidity">event ClientData(bytes clientData);
+</code></pre>
+<h3 id="collectfee"><a class="header" href="#collectfee">CollectFee</a></h3>
+<p>Emitted when the fee is collected</p>
+<pre><code class="language-solidity">event CollectFee(address token, uint256 totalAmount, uint256 feeAmount, address recipient);
+</code></pre>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<h3 id="deadlinepassed"><a class="header" href="#deadlinepassed">DeadlinePassed</a></h3>
+<p>Thrown when the deadline is passed</p>
+<pre><code class="language-solidity">error DeadlinePassed(uint256 deadline, uint256 blockTimestamp);
+</code></pre>
+<h3 id="invalidmsgvalue"><a class="header" href="#invalidmsgvalue">InvalidMsgValue</a></h3>
+<p>Thrown when the msg.value is less than the required amount</p>
+<pre><code class="language-solidity">error InvalidMsgValue(uint256 required, uint256 provided);
+</code></pre>
+<h3 id="notenoughoutputamount"><a class="header" href="#notenoughoutputamount">NotEnoughOutputAmount</a></h3>
+<p>Thrown when the output amount is less than the minimum amount</p>
+<pre><code class="language-solidity">error NotEnoughOutputAmount(uint256 minAmount, uint256 outputAmount);
+</code></pre>
+<h3 id="toolargeinputamount"><a class="header" href="#toolargeinputamount">TooLargeInputAmount</a></h3>
+<p>Thrown when the input amount is too large</p>
+<pre><code class="language-solidity">error TooLargeInputAmount(uint256 inputAmount);
+</code></pre>
+<h3 id="callexecutorfailed"><a class="header" href="#callexecutorfailed">CallExecutorFailed</a></h3>
+<p>Thrown when failed to call the executor</p>
+<pre><code class="language-solidity">error CallExecutorFailed();
+</code></pre>
+<h3 id="permit2failed"><a class="header" href="#permit2failed">Permit2Failed</a></h3>
+<p>Thrown when failed to call permit2</p>
+<pre><code class="language-solidity">error Permit2Failed();
+</code></pre>
+<h3 id="totaltransferredexceeded"><a class="header" href="#totaltransferredexceeded">TotalTransferredExceeded</a></h3>
+<p>Thrown when the total transferred amount exceeds the total amount</p>
+<pre><code class="language-solidity">error TotalTransferredExceeded(uint256 totalAmount, uint256 totalTransferred);
+</code></pre>
+<h2 id="structs"><a class="header" href="#structs">Structs</a></h2>
+<h3 id="inputtokendata"><a class="header" href="#inputtokendata">InputTokenData</a></h3>
+<p>Contains the additional data for an input token</p>
+<pre><code class="language-solidity">struct InputTokenData {
+  // Permit method selection:
+  // length = 5 * 32: use ERC20 `permit`
+  // length = 6 * 32: use DAI `permit`
+  // Transfer method selection:
+  // length == 0: use Permit2 `transferFrom`
+  // length != 0: use ERC20 `transferFrom`
+  bytes permitData;
+  address[] feeRecipients;
+  uint256[] fees;
+  address[] targets;
+  uint256[] amounts;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>permitData</code></td><td><code>bytes</code></td><td>The permit data</td></tr>
+<tr><td><code>feeRecipients</code></td><td><code>address[]</code></td><td>The fee recipients</td></tr>
+<tr><td><code>fees</code></td><td><code>uint256[]</code></td><td>The fees, either in bps or absolute value</td></tr>
+<tr><td><code>targets</code></td><td><code>address[]</code></td><td>The targets to transfer the input token to</td></tr>
+<tr><td><code>amounts</code></td><td><code>uint256[]</code></td><td>The amounts to transfer to the targets</td></tr>
+</tbody></table>
+</div>
+<h3 id="outputtokendata"><a class="header" href="#outputtokendata">OutputTokenData</a></h3>
+<p>Contains the additional data for an output token</p>
+<pre><code class="language-solidity">struct OutputTokenData {
+  uint256 minAmount;
+  address[] feeRecipients;
+  uint256[] fees;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>minAmount</code></td><td><code>uint256</code></td><td>The minimum output amount</td></tr>
+<tr><td><code>feeRecipients</code></td><td><code>address[]</code></td><td>The fee recipients</td></tr>
+<tr><td><code>fees</code></td><td><code>uint256[]</code></td><td>The fees, either in bps or absolute value</td></tr>
+</tbody></table>
+</div>
+<h3 id="swapparams"><a class="header" href="#swapparams">SwapParams</a></h3>
+<p>Contains the parameters for a swap</p>
+<pre><code class="language-solidity">struct SwapParams {
+  address[] inputTokens;
+  uint256[] inputAmounts;
+  InputTokenData[] inputData;
+  address[] outputTokens;
+  OutputTokenData[] outputData;
+  bytes permit2Data;
+  address executor;
+  bytes executorData;
+  address recipient;
+  uint256 deadline;
+  bytes clientData;
+}
+</code></pre>
+<p><strong>Properties</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>inputTokens</code></td><td><code>address[]</code></td><td>The input tokens</td></tr>
+<tr><td><code>inputAmounts</code></td><td><code>uint256[]</code></td><td>The input amounts (only used for fee calculation)</td></tr>
+<tr><td><code>inputData</code></td><td><code>InputTokenData[]</code></td><td>The additional data for the input tokens</td></tr>
+<tr><td><code>outputTokens</code></td><td><code>address[]</code></td><td>The output tokens</td></tr>
+<tr><td><code>outputData</code></td><td><code>OutputTokenData[]</code></td><td>The additional data for the output tokens</td></tr>
+<tr><td><code>permit2Data</code></td><td><code>bytes</code></td><td>The data to call permit2 with</td></tr>
+<tr><td><code>executor</code></td><td><code>address</code></td><td>The executor to call</td></tr>
+<tr><td><code>executorData</code></td><td><code>bytes</code></td><td>The data to pass to the executor</td></tr>
+<tr><td><code>recipient</code></td><td><code>address</code></td><td>The recipient of the output tokens</td></tr>
+<tr><td><code>deadline</code></td><td><code>uint256</code></td><td>The deadline for the swap</td></tr>
+<tr><td><code>clientData</code></td><td><code>bytes</code></td><td>The client data</td></tr>
+</tbody></table>
+</div>
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../../../src/interfaces/IKSAggregationExecutor.sol/interface.IKSAggregationExecutor.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../../../src/KSAggregationRouterV3.sol/contract.KSAggregationRouterV3.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../../../src/interfaces/IKSAggregationExecutor.sol/interface.IKSAggregationExecutor.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../../../src/KSAggregationRouterV3.sol/contract.KSAggregationRouterV3.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../../../elasticlunr.min.js"></script>
+        <script src="../../../mark.min.js"></script>
+        <script src="../../../searcher.js"></script>
+
+        <script src="../../../clipboard.min.js"></script>
+        <script src="../../../highlight.js"></script>
+        <script src="../../../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../../../solidity.min.js"></script>
+
+
+
+    </div>
+    </body>
+</html>
